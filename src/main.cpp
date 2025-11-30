@@ -30,13 +30,6 @@ TaskHandle_t runTaskHandle = NULL;
 QueueHandle_t queueServer;
 QueueHandle_t queueContest;
 
-// struct Command
-// {
-//   uint8_t key;
-//   uint32_t value;
-// };
-
-// function prototypes
 void runTask(void *pvParameters);
 void webServerTask(void *pvParameters);
 void contestTask(void *pvParameters);
