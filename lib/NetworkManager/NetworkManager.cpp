@@ -508,6 +508,7 @@ void NetworkManager::sendImage()
             if (socketClient && socketClient.connected())
             {
                 socketClient.write((uint8_t *)hardwareManager->camera.getPicture()->buf, cmd.value);
+                socketClient.write(BYTE_STOP);
             }
             hardwareManager->serialLog.println("Sent image: " + String(cmd.value) + " bytes\n");
         }
