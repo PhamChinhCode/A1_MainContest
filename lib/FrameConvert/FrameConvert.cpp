@@ -64,7 +64,7 @@ void FrameConvert::convert()
         (uint32_t)frame[7];
 }
 
-uint8_t *FrameConvert::encode()
+uint8_t *FrameConvert::Encode()
 {
 
     frame[0] = BYTE_START;
@@ -79,12 +79,38 @@ uint8_t *FrameConvert::encode()
     frame[9] = 0; // CRC hoặc byte kiểm tra tùy bạn
     return frame;
 }
-size_t FrameConvert::getFrame(uint8_t *data, size_t len)
+Command *FrameConvert::getCommand(uint8_t *data, size_t len)
 {
-    encode();
-    if (frame == nullptr || data == nullptr || len < 10)
-        return 0;
+    if (data == nullptr)
+        return nullptr;
 
-    memcpy(data, frame, 10);
-    return 10;
+    if (data[0] != BYTE_START)
+        return nullptr;
+    if (data[2] != BYTE_GET && data[2] != BYTE_SET)
+        return nullptr;
+
+    decode.key = data[1];
+
+    decode.value = ((uint32_t)data[4] << 24) |
+                   ((uint32_t)data[5] << 16) |
+                   ((uint32_t)data[6] << 8) |
+                   (uint32_t)data[7];
+
+    return &decode;
+}
+uint8_t *FrameConvert::getFrame(Command *cmd, uint8_t type, uint8_t id, uint8_t StopByte)
+{
+    encodeFrame[0] = BYTE_START;
+    encodeFrame[1] = cmd->key;
+    encodeFrame[2] = type;
+    encodeFrame[3] = id;
+
+    encodeFrame[4] = (cmd->value >> 24) & 0xFF;
+    encodeFrame[5] = (cmd->value >> 16) & 0xFF;
+    encodeFrame[6] = (cmd->value >> 8) & 0xFF;
+    encodeFrame[7] = cmd->value & 0xFF;
+
+    encodeFrame[8] = 0;
+    encodeFrame[9] = StopByte;
+    return encodeFrame;
 }

@@ -53,6 +53,12 @@
 #define STOP_CONTEST_COMMAND 0xA2
 #define READY_CONTEST_COMMAND 0xA3
 
+// mark off contest
+#define MARK_COMMAND 0xB0
+
+// Camera command
+#define CAMERA_COMMAND 0xB1
+
 // Contest Status
 #define STATE_COMMAND 0xc0
 #define STATE_READY_COMMAND 0xC1

@@ -7,6 +7,8 @@
 #include <CameraHandler.h>
 #include <SerialHandle.h>
 #include <DateTime.h>
+#include <DisplayHandler.h>
+#include <defineName.h>
 
 #define SERIAL_OUTPUT Serial0
 #define SERIAL_BAUDRATE 115200
@@ -16,6 +18,7 @@ class HardwareManager
 private:
     // Private members and methods for hardware management
 public:
+    DisplayHandler display;
     MicroSDTask microSD;
     CameraHandler camera;
     SerialHandle serialLog;

@@ -11,17 +11,22 @@ class FrameConvert
 private:
     uint8_t *frame;
     size_t len;
+    Command decode;
+    Command *encode;
+    uint8_t encodeFrame[10];
     uint8_t key;
     uint32_t value;
 
 public:
     FrameConvert();
     void setFrame(uint8_t *data, size_t len);
+    Command *getCommand(uint8_t *data, size_t len);
     void convert();
     uint8_t getKey();
     uint32_t getValue();
+
     void setValue(uint32_t value);
     void setKey(uint8_t key);
-    uint8_t *encode();
-    size_t getFrame(uint8_t *data, size_t len);
+    uint8_t *Encode();
+    uint8_t *getFrame(Command *cmd, uint8_t type = BYTE_SET, uint8_t id = 0, uint8_t StopByte = BYTE_STOP);
 };

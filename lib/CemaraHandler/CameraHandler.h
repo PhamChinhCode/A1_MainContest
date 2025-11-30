@@ -59,9 +59,9 @@ private:
 public:
     camera_fb_t *fb = NULL;
     bool init();
-    bool capture();
-    camera_fb_t *getPicture();
-    void returnbuffer();
+    bool capture();            // chup anh
+    camera_fb_t *getPicture(); // lay anh
+    void returnbuffer();       // xoa anh
     bool lock(uint32_t timeoutMs = portMAX_DELAY);
     void unlock();
 };

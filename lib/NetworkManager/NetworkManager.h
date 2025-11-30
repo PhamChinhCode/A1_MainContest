@@ -43,7 +43,8 @@ public:
     void handleUpdateEnd();
     void handleSocketClient();
 
-    void sendCommand(Command cmd);
+    void sendCommand(Command *cmd, uint8_t stopByte = BYTE_STOP);
+    void sendImage();
 
     uint8_t getNotifyKey();
     uint32_t getNotifyValue();

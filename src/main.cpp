@@ -1,4 +1,5 @@
 #include "Myconfig.h"
+#include <defineName.h>
 #include <FrameConvert.h>
 #include <MicroSDTask.h>
 #include <WiFi.h>
@@ -102,7 +103,7 @@ void webServerTask(void *pvParameters)
     {
       hardwareManager.serialLog.println("SERVER_TASK : receive notify command: " + String(commandRecv.key) + " , " + String(commandRecv.value));
 
-      networkManager.sendCommand(commandRecv);
+      networkManager.sendCommand(&commandRecv);
     }
 
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -119,6 +120,7 @@ void contestTask(void *pvParameters)
   uint32_t notifyType;
   Command commandRecv;
   Command commandSend;
+
   while (true)
   {
     motor.update();
@@ -133,28 +135,33 @@ void contestTask(void *pvParameters)
     if (xQueueReceive(queueContest, &commandRecv, 0) == pdTRUE)
     {
       hardwareManager.serialLog.println("CONTEST_TASK : receive command from server task: " + String(commandRecv.key) + " , " + String(commandRecv.value));
-      switch (commandRecv.value)
+      switch (commandRecv.key)
       {
-      case START_CONTEST_COMMAND:
-        hardwareManager.serialLog.println("Starting contest from contest task...");
-        contestManager.addContest(CONTEST_1_ID, 0);
-        contestManager.addContest(CONTEST_2_ID, 1);
-        contestManager.addContest(CONTEST_3_ID, 2);
-        contestManager.addContest(CONTEST_4_ID, 3);
-        contestManager.run();
-        break;
-      case STOP_CONTEST_COMMAND:
-        hardwareManager.serialLog.println("Stopping contest from contest task...");
-        contestManager.stop();
-        break;
-      case KEY_NULL:
-        if (commandRecv.key == STATE_COMMAND)
+      case CONTROL_COMMAND:
+        switch (commandRecv.value)
         {
-          contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
-          hardwareManager.serialLog.println("Contest status request from web client: " + String(contestManager.getStatus()));
+        case START_CONTEST_COMMAND:
+          hardwareManager.serialLog.println("Starting contest from contest task...");
+          contestManager.addContest(CONTEST_1_ID, 0);
+          contestManager.addContest(CONTEST_2_ID, 1);
+          contestManager.addContest(CONTEST_3_ID, 2);
+          contestManager.addContest(CONTEST_4_ID, 3);
+          contestManager.run();
+          break;
+        case STOP_CONTEST_COMMAND:
+          hardwareManager.serialLog.println("Stopping contest from contest task...");
+          contestManager.stop();
+          break;
         }
         break;
-      default:
+      case MARK_COMMAND:
+        hardwareManager.serialLog.println("Mark off contest command received: " + String(commandRecv.value));
+        hardwareManager.display.setMark(commandRecv.value);
+        contestManager.addLog(0xFF, "Mark off contest: " + String(commandRecv.value));
+        break;
+      case STATE_COMMAND:
+        contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
+        hardwareManager.serialLog.println("Contest status request from web client: " + String(contestManager.getStatus()));
         break;
       }
     }
@@ -175,11 +182,17 @@ void contestTask(void *pvParameters)
     // }
     // motor.lastMotorSignel.sensorHall = motor.getSensorHall();
 
-    if (millis() - timer > 1000)
+    if (millis() - timer > 100)
     {
+      hardwareManager.display.setEncoder(motor.getEncoderCount() % 2 == 0 ? 0 : 1);
+      hardwareManager.display.setHallSensor(motor.getSensorHall());
+      hardwareManager.display.setEngine(motor.getSignelEngine());
+      hardwareManager.display.setSignalLeft(motor.getSignelLeft());
+      hardwareManager.display.setContest(contestManager.getStatus());
       // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
       //  hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
       //   hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
+      hardwareManager.display.display();
       timer = millis();
     }
     if (lastRunState != contestManager.isRunning())
@@ -220,8 +233,8 @@ void setup()
   hardwareManager.begin();
   motor.init();
 
-  xTaskCreatePinnedToCore(webServerTask, "WebServerTask", 16384, NULL, 1, &webServerTaskHandle, 0); // Core 0
-  xTaskCreatePinnedToCore(contestTask, "ContestTask", 8192, NULL, 1, &contestTaskHandle, 1);        // Core 1
+  xTaskCreatePinnedToCore(webServerTask, "WebServerTask", 8192, NULL, 1, &webServerTaskHandle, 0); // Core 0
+  xTaskCreatePinnedToCore(contestTask, "ContestTask", 8192, NULL, 1, &contestTaskHandle, 1);       // Core 1
 
   queueServer = xQueueCreate(10, sizeof(Command));
   queueContest = xQueueCreate(10, sizeof(Command));

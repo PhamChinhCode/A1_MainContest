@@ -438,40 +438,82 @@ void NetworkManager::handleSocketClient()
 
     if (socketClient.available() >= FRAME_BUFFER_SIZE)
     {
-        len = socketClient.readBytes(buffer, FRAME_BUFFER_SIZE);
+        // len = socketClient.readBytes(buffer, FRAME_BUFFER_SIZE);
+        len = socketClient.readBytesUntil(BYTE_STOP, buffer, FRAME_BUFFER_SIZE);
         hardwareManager->serialLog.println("Received socket data: " + String(len) + " bytes");
-        frameConverter.setFrame(buffer, len);
-        uint8_t key = frameConverter.getKey();
-        uint32_t value = frameConverter.getValue();
-        setNotify(key, value);
+        // frameConverter.setFrame(buffer, len);
+        // uint8_t key = frameConverter.getKey();
+        // uint32_t value = frameConverter.getValue();
+
+        Command *cmd = frameConverter.getCommand(buffer, len);
+
+        if (cmd->key == CAMERA_COMMAND)
+        {
+            sendImage();
+        }
+        else
+        {
+            setNotify(cmd->key, cmd->value);
+        }
     }
 }
-void NetworkManager::sendCommand(Command cmd)
+void NetworkManager::sendCommand(Command *cmd, uint8_t stopByte)
 {
+
+    // frameConverter.setKey(cmd.key);
+    // frameConverter.setValue(cmd.value);
+    // frameConverter.encode();
+    // size_t frameLen = frameConverter.getFrame(buffer, sizeof(buffer));
+    uint8_t *bs;
+    bs = frameConverter.getFrame(cmd);
+
+    uint8_t bytesSent[10];
+    bytesSent[0] = BYTE_START;
+    bytesSent[1] = cmd->key;
+    bytesSent[2] = BYTE_SET;
+    bytesSent[3] = 0x00;
+    bytesSent[4] = cmd->value >> 24 & 0xFF;
+    bytesSent[5] = cmd->value >> 16 & 0xFF;
+    bytesSent[6] = cmd->value >> 8 & 0xFF;
+    bytesSent[7] = cmd->value & 0xFF;
+    bytesSent[8] = 0;
+    bytesSent[9] = stopByte;
+    hardwareManager->serialLog.print("Sent socket data " + String(sizeof(bytesSent)));
+    hardwareManager->serialLog.print(" bytes: ");
+    for (uint8_t i = 0; i < sizeof(bytesSent); i++)
+    {
+        hardwareManager->serialLog.print(String(bytesSent[i], HEX) + " ");
+    }
+    hardwareManager->serialLog.println(" ");
     if (socketClient && socketClient.connected())
     {
-        // frameConverter.setKey(cmd.key);
-        // frameConverter.setValue(cmd.value);
-        // frameConverter.encode();
-        // size_t frameLen = frameConverter.getFrame(buffer, sizeof(buffer));
-        uint8_t bytesSent[10];
-        bytesSent[0] = BYTE_START;
-        bytesSent[1] = cmd.key;
-        bytesSent[2] = BYTE_SET;
-        bytesSent[3] = 0x00;
-        bytesSent[4] = cmd.value >> 24 & 0xFF;
-        bytesSent[5] = cmd.value >> 16 & 0xFF;
-        bytesSent[6] = cmd.value >> 8 & 0xFF;
-        bytesSent[7] = cmd.value & 0xFF;
-        bytesSent[8] = 0;
-        bytesSent[9] = BYTE_STOP;
-        hardwareManager->serialLog.print("Sent socket data " + String(sizeof(bytesSent)));
         socketClient.write(bytesSent, sizeof(bytesSent));
-        hardwareManager->serialLog.print(" bytes: ");
-        for (uint8_t i = 0; i < sizeof(bytesSent); i++)
+    }
+}
+void NetworkManager::sendImage()
+{
+    // hardwareManager->camera.capture();
+    // camera_fb_t *fb = hardwareManager->camera.getPicture();
+
+    uint8_t bytesSent[10];
+
+    if (hardwareManager->camera.capture())
+    {
+        if (hardwareManager->camera.getPicture() != NULL)
         {
-            hardwareManager->serialLog.print(String(bytesSent[i], HEX) + " ");
+            Command cmd;
+            cmd.key = CAMERA_COMMAND;
+            cmd.value = hardwareManager->camera.getPicture()->len;
+            sendCommand(&cmd, BYTE_PAYLOAD);
+            if (socketClient && socketClient.connected())
+            {
+                socketClient.write((uint8_t *)hardwareManager->camera.getPicture()->buf, cmd.value);
+            }
+            hardwareManager->serialLog.println("Sent image: " + String(cmd.value) + " bytes\n");
         }
-        hardwareManager->serialLog.println(" ");
+        else
+        {
+            hardwareManager->serialLog.println("ERROR: không thể đọc camera <!>");
+        }
     }
 }
