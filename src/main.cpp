@@ -76,6 +76,7 @@ void firstSetup()
 // main task
 void webServerTask(void *pvParameters)
 {
+  networkManager.setQueue(&queueContest);
   networkManager.begin();
   networkManager.startServer();
   hardwareManager.serialLog.println("Web server task inited running on core " + String(xPortGetCoreID()));
@@ -86,17 +87,17 @@ void webServerTask(void *pvParameters)
   while (true)
   {
     networkManager.handleClient();
-    if (networkManager.isNotify())
-    {
-      commandSend = networkManager.getCommand();
-      xQueueSend(queueContest, &commandSend, 0);
-      hardwareManager.serialLog.println("SERVER_TASK : receive notify command: " + String(commandSend.key) + " , " + String(commandSend.value));
-    }
+    // if (networkManager.isNotify())
+    // {
+    //   commandSend = networkManager.getCommand();
+    //   xQueueSend(queueContest, &commandSend, 0);
+    //   hardwareManager.serialLog.println("SERVER_TASK : receive notify command: " + String(commandSend.key, HEX) + " , " + String(commandSend.value, HEX));
+    // }
+
     if (xQueueReceive(queueServer, &commandRecv, 0) == pdTRUE)
     {
-      hardwareManager.serialLog.println("SERVER_TASK : receive notify command: " + String(commandRecv.key) + " , " + String(commandRecv.value));
-
-      networkManager.sendCommand(&commandRecv);
+      hardwareManager.serialLog.println("SERVER_TASK : receive notify command: " + String(commandRecv.key, HEX) + " , " + String(commandRecv.value, HEX));
+      networkManager.sendCommandSocket(&commandRecv);
     }
 
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -104,7 +105,9 @@ void webServerTask(void *pvParameters)
 }
 void contestTask(void *pvParameters)
 {
+  contestManager.setQueue(&queueServer);
   contestManager.begin();
+
   hardwareManager.serialLog.println("Contest task inited running on core " + String(xPortGetCoreID()));
   hardwareManager.serialLog.println("Version: " + String(VERSION));
   bool lastHall;
@@ -118,16 +121,16 @@ void contestTask(void *pvParameters)
   {
     motor.update();
     hardwareManager.update();
-    if (contestManager.isNotify())
-    {
-      commandSend = contestManager.getCommand();
-      xQueueSend(queueServer, &commandSend, 0);
-      hardwareManager.serialLog.println("CONTEST_TASK : send notify command to server task: " + String(commandSend.key) + " , " + String(commandSend.value));
-    }
+    // if (contestManager.isNotify())
+    // {
+    //   commandSend = contestManager.getCommand();
+    //   xQueueSend(queueServer, &commandSend, 0);
+    //   hardwareManager.serialLog.println("CONTEST_TASK : send notify command to server task: " + String(commandSend.key, HEX) + " , " + String(commandSend.value, HEX));
+    // }
 
     if (xQueueReceive(queueContest, &commandRecv, 0) == pdTRUE)
     {
-      hardwareManager.serialLog.println("CONTEST_TASK : receive command from server task: " + String(commandRecv.key) + " , " + String(commandRecv.value));
+      hardwareManager.serialLog.println("CONTEST_TASK : receive command from server task: " + String(commandRecv.key, HEX) + " , " + String(commandRecv.value, HEX));
       switch (commandRecv.key)
       {
       case CONTROL_COMMAND:
@@ -195,13 +198,19 @@ void contestTask(void *pvParameters)
       if (lastRunState)
       {
         hardwareManager.serialLog.println("Creating run contest task...");
-        xTaskCreatePinnedToCore(runTask, "RunTask", 4096, NULL, 1, &runTaskHandle, 1); // Core 1
+        if (runTaskHandle == NULL)
+        {
+          xTaskCreatePinnedToCore(runTask, "RunTask", 4096, NULL, 1, &runTaskHandle, 1); // Core 1
+        }
       }
       else
       {
         hardwareManager.serialLog.println("Deleting run contest task...");
-        vTaskDelete(runTaskHandle);
-        runTaskHandle = NULL;
+        if (runTaskHandle != NULL)
+        {
+          vTaskDelete(runTaskHandle);
+          runTaskHandle = NULL;
+        }
       }
     }
     vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -214,6 +223,7 @@ void runTask(void *pvParameters)
     contestManager._runContest();
     vTaskDelay(1 / portTICK_PERIOD_MS);
   }
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 
 void setup()

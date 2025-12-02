@@ -26,11 +26,14 @@ private:
     uint8_t buffer[256];
     uint8_t len;
     Command command;
+    QueueHandle_t *_queue;
     void setNotify(uint8_t type, uint32_t val);
 
 public:
     NetworkManager(HardwareManager &hwManager);
     ~NetworkManager();
+    void setQueue(QueueHandle_t *queue);
+    void sendCommandQueue(Command cmd);
     bool begin();
     void startServer();
     void handleClient();
@@ -43,7 +46,7 @@ public:
     void handleUpdateEnd();
     void handleSocketClient();
 
-    void sendCommand(Command *cmd, uint8_t stopByte = BYTE_STOP);
+    void sendCommandSocket(Command *cmd, uint8_t stopByte = BYTE_STOP);
     void sendImage();
 
     uint8_t getNotifyKey();

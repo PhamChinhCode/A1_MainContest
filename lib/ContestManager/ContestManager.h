@@ -51,6 +51,7 @@ private:
     Command command;
 
     uint8_t status;
+    QueueHandle_t *_queue;
 
     static void _Runner(void *pvParameters);
 
@@ -65,6 +66,8 @@ private:
 public:
     ContestManager(HardwareManager &hwManager);
     ~ContestManager();
+    void setQueue(QueueHandle_t *queue);
+    void sendCommandQueue(Command cmd);
     void _runContest();
     void begin();
     void loadConfig(String str);

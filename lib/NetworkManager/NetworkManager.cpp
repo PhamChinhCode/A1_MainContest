@@ -44,6 +44,7 @@ void NetworkManager::setNotify(uint8_t type, uint32_t val)
     _notifiValue = val;
     command.key = type;
     command.value = val;
+    sendCommandQueue(command);
 }
 bool NetworkManager::begin()
 {
@@ -104,7 +105,16 @@ bool NetworkManager::begin()
 
     return true;
 }
-
+void NetworkManager::setQueue(QueueHandle_t *queue)
+{
+    this->_queue = queue;
+}
+void NetworkManager::sendCommandQueue(Command cmd)
+{
+    if (_queue == NULL)
+        return;
+    xQueueSend(*_queue, &cmd, 0);
+}
 void NetworkManager::startServer()
 {
     hardwareManager->serialLog.println("Starting server...");
@@ -457,7 +467,7 @@ void NetworkManager::handleSocketClient()
         }
     }
 }
-void NetworkManager::sendCommand(Command *cmd, uint8_t stopByte)
+void NetworkManager::sendCommandSocket(Command *cmd, uint8_t stopByte)
 {
 
     // frameConverter.setKey(cmd.key);
@@ -504,13 +514,14 @@ void NetworkManager::sendImage()
             Command cmd;
             cmd.key = CAMERA_COMMAND;
             cmd.value = hardwareManager->camera.getPicture()->len;
-            sendCommand(&cmd, BYTE_PAYLOAD);
+            sendCommandSocket(&cmd, BYTE_PAYLOAD);
             if (socketClient && socketClient.connected())
             {
+
                 socketClient.write((uint8_t *)hardwareManager->camera.getPicture()->buf, cmd.value);
                 socketClient.write(BYTE_STOP);
+                hardwareManager->serialLog.println("Sent image: " + String(cmd.value) + " bytes\n");
             }
-            hardwareManager->serialLog.println("Sent image: " + String(cmd.value) + " bytes\n");
         }
         else
         {

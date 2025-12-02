@@ -26,6 +26,16 @@ void ContestManager::begin()
     }
     setStatus(STATE_FREE_COMMAND);
 }
+void ContestManager::setQueue(QueueHandle_t *queue)
+{
+    this->_queue = queue;
+}
+void ContestManager::sendCommandQueue(Command cmd)
+{
+    if (_queue == NULL)
+        return;
+    xQueueSend(*_queue, &cmd, 5000 / portTICK_PERIOD_MS);
+}
 void ContestManager::loadConfig(String str)
 {
     JsonDocument doc;
@@ -87,16 +97,12 @@ void ContestManager::stop()
 {
     if (this->_isRunning)
     {
-        this->_isRunning = false;
+        setNotify(CONTROL_COMMAND, STOP_CONTEST_COMMAND);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
         setStatus(STATE_FREE_COMMAND);
-        // addLog(STOP_CONTEST_COMMAND, "Stop contest");
-        //  if (_contestHandle != NULL)
-        //  {
+        addLog(STOP_CONTEST_COMMAND, "Stop contest");
 
-        //     hardwareManager->serialLog.println("Contest task deleted");
-        //     vTaskDelete(_contestHandle);
-        // }
-        hardwareManager->serialLog.println("Contest task deleted");
+        this->_isRunning = false;
     }
 }
 void ContestManager::addError(uint8_t errorID)
@@ -159,6 +165,7 @@ void ContestManager::setNotify(uint8_t type, uint32_t val)
     _notifiValue = val;
     command.key = type;
     command.value = val;
+    sendCommandQueue(command);
     vTaskDelay(1 / portTICK_PERIOD_MS);
 }
 void ContestManager::setStatus(uint8_t status)
@@ -212,8 +219,7 @@ void ContestManager::_runContest()
             break;
         }
     }
-    setStatus(STATE_FREE_COMMAND);
-    addLog(STOP_CONTEST_COMMAND, "Stop contest");
+
     _logPath = "";
     this->stop();
 }
@@ -229,7 +235,7 @@ bool ContestManager::_contest1Runer()
     uint32_t deltaDistance = 0;
     startTime = millis();
 
-    addError(ERROR_NO_SIGNAL_LEFT_IN);
+    // addError(ERROR_NO_SIGNAL_LEFT_IN);
 
     // uint8_t errOverrideStart = 0;
     // uint8_t errRunoutTimeStart = 0;
