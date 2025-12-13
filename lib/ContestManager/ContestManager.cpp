@@ -403,12 +403,12 @@ bool ContestManager::_contest3Runer()
     {
         deltaDistance = motor.getDistance() - lastDistance;
         bool curHall = motor.getSensorHall();
-        if (curHall && !lastSensorHall && deltaDistance > 150)
+        if (curHall && !lastSensorHall && deltaDistance > 100)
         {
 
             lastDistance = motor.getDistance();
 
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
+            if (inDeltaValue(deltaDistance, _distance[hallCount], 200 + _distance[hallCount] * 0.5))
             {
                 // pass
             }

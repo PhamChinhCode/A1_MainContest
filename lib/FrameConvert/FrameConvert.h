@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <defineName.h>
 #include <Myconfig.h>
 struct Command
 {

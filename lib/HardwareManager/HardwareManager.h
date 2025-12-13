@@ -9,6 +9,7 @@
 #include <DateTime.h>
 #include <DisplayHandler.h>
 #include <defineName.h>
+#include <ScreenHandler.h>
 
 #define SERIAL_OUTPUT Serial0
 #define SERIAL_BAUDRATE 115200
@@ -22,6 +23,7 @@ public:
     MicroSDTask microSD;
     CameraHandler camera;
     SerialHandle serialLog;
+    SerialHandle serialScreen;
     DateTime dateTime;
     HardwareManager();
     ~HardwareManager();

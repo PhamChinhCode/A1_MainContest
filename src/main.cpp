@@ -178,18 +178,19 @@ void contestTask(void *pvParameters)
     // }
     // motor.lastMotorSignel.sensorHall = motor.getSensorHall();
 
-    if (millis() - timer > 100)
+    if (millis() - timer > 1000)
     {
       hardwareManager.display.setEncoder(motor.getEncoderCount() % 2 == 0 ? 0 : 1);
       hardwareManager.display.setHallSensor(motor.getSensorHall());
       hardwareManager.display.setEngine(motor.getSignelEngine());
       hardwareManager.display.setSignalLeft(motor.getSignelLeft());
       hardwareManager.display.setContest(contestManager.getStatus());
-      // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
-      // hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
-      //   hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
       hardwareManager.display.display();
       timer = millis();
+      // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
+      // hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
+      // hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
+      // hardwareManager.sersialScreen.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
     }
     if (lastRunState != contestManager.isRunning())
     {

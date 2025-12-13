@@ -57,9 +57,14 @@
 
 // mark off contest
 #define MARK_COMMAND 0xB0
-
 // Camera command
 #define CAMERA_COMMAND 0xB1
+// Id number command
+#define IDNUMBER_COMMAND 0xB2
+// Real-time data command
+#define REALTIME_COMMAND 0xB3
+// device status command
+#define DEVICE_STATUS_COMMAND 0xB4
 
 // Contest Status
 #define STATE_COMMAND 0xc0
