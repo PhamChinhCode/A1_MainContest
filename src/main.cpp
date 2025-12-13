@@ -172,7 +172,7 @@ void contestTask(void *pvParameters)
     //   hardwareManager.serialLog.println("---> attachLine attack");
     // }
     // motor.lastMotorSignel.signelEngine = motor.getSignelEngine();
-    // if (motor.getSensorHall() && motor.lastMotorSignel.sensorHall)
+    // if (motor.getSensorHall())
     // {
     //   hardwareManager.serialLog.println("---> sensorHall attack");
     // }
@@ -186,7 +186,7 @@ void contestTask(void *pvParameters)
       hardwareManager.display.setSignalLeft(motor.getSignelLeft());
       hardwareManager.display.setContest(contestManager.getStatus());
       // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
-      //  hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
+      // hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
       //   hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
       hardwareManager.display.display();
       timer = millis();
@@ -241,6 +241,7 @@ void setup()
 
   queueServer = xQueueCreate(10, sizeof(Command));
   queueContest = xQueueCreate(10, sizeof(Command));
+  // firstSetup();
 }
 
 void loop()

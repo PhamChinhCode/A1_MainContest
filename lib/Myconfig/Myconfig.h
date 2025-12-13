@@ -12,8 +12,11 @@
 #define ENC_B 48
 #define ENC_I 45
 
-#define DEFAULT_SSID "PC_NET_MOBILE"
-#define DEFAULT_PASSWORD "1234567890"
+// #define DEFAULT_SSID "PC_NET_MOBILE"
+// #define DEFAULT_PASSWORD "1234567890"
+
+// #define DEFAULT_SSID "dientuthainguyen.vn"
+// #define DEFAULT_PASSWORD "299kmgio"
 
 #define DATA_PIN_DISPLAY 4
 #define CLOCK_PIN_DISPLAY 5

@@ -247,7 +247,7 @@ bool ContestManager::_contest1Runer()
     // chờ tín hiệu đi qua vạch xuất phát
     while (!motor.getSensorHall() && errRunoutTimeStart == 0)
     {
-        if (millis() - startTime > 60000 && errRunoutTimeStart == 0)
+        if (millis() - startTime > 600000 && errRunoutTimeStart == 0)
         {
             addError(ERROR_RUNOUT_START_TIME);
             hardwareManager->serialLog.println("--> Contest1: ERROR_RUNOUT_START_TIME");
@@ -280,13 +280,11 @@ bool ContestManager::_contest1Runer()
     while (1)
     {
         deltaDistance = motor.getDistance() - lastDistance;
-
-        if (motor.getSensorHall() && !lastSensorHall && deltaDistance > 80)
+        bool curHall = motor.getSensorHall();
+        if (curHall && !lastSensorHall && deltaDistance > 150)
         {
-
             lastDistance = motor.getDistance();
-
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 40))
+            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
             {
                 // pass
             }
@@ -298,21 +296,22 @@ bool ContestManager::_contest1Runer()
             hardwareManager->serialLog.println("--> Contest1: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
             hallCount++;
         }
-        lastSensorHall = motor.getSensorHall();
+        lastSensorHall = curHall;
 
         // lỗi quá thời gian bài thi
-        if (millis() - startTime > 60000 && errRunoutTimeContest == 0)
+        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
         {
             addError(ERROR_RUNOUT_CONTEST_TIME);
+            errRunoutTimeContest = 1;
             hardwareManager->serialLog.println("--> Contest1: ERROR_RUNOUT_CONTEST_TIME");
-            hallCount = 4; // kết thúc bài thi
+            // hallCount = 4; // kết thúc bài thi
         }
 
-        if (hallCount == 4)
+        if (hallCount == 6)
         {
             return true;
         }
-        if (hallCount > 4)
+        if (hallCount > 6)
         {
             return false;
         }
@@ -325,12 +324,12 @@ bool ContestManager::_contest2Runer()
     addLog(CONTEST_2_ID, "start contest 2");
     setStatus(STATE_CONTEST2_RUNNING);
     bool lastSensorHall = false;
-    hallCount = 4;
+    hallCount = 6;
     uint32_t lastDistance = 0;
     uint32_t deltaDistance = 0;
     // uint32_t startTime = millis();
-    errRunoutTimeContest = 0;
-    startTime = millis();
+    // errRunoutTimeContest = 0;
+    // startTime = millis();
     // uint8_t errOverrideStart = 0;
     // uint8_t errRunoutTimeStart = 0;
     // uint8_t errRunoutTimeContest = 0;
@@ -343,13 +342,13 @@ bool ContestManager::_contest2Runer()
     while (1)
     {
         deltaDistance = motor.getDistance() - lastDistance;
-
-        if (motor.getSensorHall() && !lastSensorHall && deltaDistance > 80)
+        bool curHall = motor.getSensorHall();
+        if (curHall && !lastSensorHall && deltaDistance > 50)
         {
 
             lastDistance = motor.getDistance();
 
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 40))
+            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
             {
                 // pass
             }
@@ -361,21 +360,22 @@ bool ContestManager::_contest2Runer()
             hardwareManager->serialLog.println("--> Contest2: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
             hallCount++;
         }
-        lastSensorHall = motor.getSensorHall();
+        lastSensorHall = curHall;
 
         // lỗi quá thời gian bài thi
-        if (millis() - startTime > 60000 && errRunoutTimeContest == 0)
+        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
         {
             addError(ERROR_RUNOUT_CONTEST_TIME);
+            errRunoutTimeContest = 1;
             hardwareManager->serialLog.println("--> Contest2: ERROR_RUNOUT_CONTEST_TIME");
-            hallCount = 5; // kết thúc bài thi
+            // hallCount = 5; // kết thúc bài thi
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
 
-        if (hallCount == 5)
+        if (hallCount == 8)
             return true;
-        if (hallCount > 5)
+        if (hallCount > 8)
             return false;
     }
 }
@@ -384,12 +384,12 @@ bool ContestManager::_contest3Runer()
     addLog(CONTEST_3_ID, "start contest 3");
     setStatus(STATE_CONTEST3_RUNNING);
     bool lastSensorHall = false;
-    hallCount = 5;
+    hallCount = 8;
     uint32_t lastDistance = 0;
     uint32_t deltaDistance = 0;
     // uint32_t startTime = millis();
-    errRunoutTimeContest = 0;
-    startTime = millis();
+    // errRunoutTimeContest = 0;
+    // startTime = millis();
     // uint8_t errOverrideStart = 0;
     // uint8_t errRunoutTimeStart = 0;
     // uint8_t errRunoutTimeContest = 0;
@@ -402,13 +402,13 @@ bool ContestManager::_contest3Runer()
     while (1)
     {
         deltaDistance = motor.getDistance() - lastDistance;
-
-        if (motor.getSensorHall() && !lastSensorHall && deltaDistance > 60)
+        bool curHall = motor.getSensorHall();
+        if (curHall && !lastSensorHall && deltaDistance > 150)
         {
 
             lastDistance = motor.getDistance();
 
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 40))
+            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
             {
                 // pass
             }
@@ -420,21 +420,22 @@ bool ContestManager::_contest3Runer()
             hardwareManager->serialLog.println("--> Contest3: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
             hallCount++;
         }
-        lastSensorHall = motor.getSensorHall();
+        lastSensorHall = curHall;
 
         // lỗi quá thời gian bài thi
-        if (millis() - startTime > 60000 && errRunoutTimeContest == 0)
+        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
         {
             addError(ERROR_RUNOUT_CONTEST_TIME);
+            errRunoutTimeContest = 1;
             hardwareManager->serialLog.println("--> Contest3: ERROR_RUNOUT_CONTEST_TIME");
-            hallCount = 7; // kết thúc bài thi
+            // hallCount = 7; // kết thúc bài thi
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
 
-        if (hallCount == 7)
+        if (hallCount == 10)
             return true;
-        if (hallCount > 7)
+        if (hallCount > 10)
             return false;
     }
 }
@@ -444,12 +445,12 @@ bool ContestManager::_contest4Runer()
     addLog(CONTEST_4_ID, "start contest 4");
     setStatus(STATE_CONTEST4_RUNNING);
     bool lastSensorHall = false;
-    hallCount = 7;
+    hallCount = 10;
     uint32_t lastDistance = 0;
     uint32_t deltaDistance = 0;
     // uint32_t startTime = millis();
-    errRunoutTimeContest = 0;
-    startTime = millis();
+    // errRunoutTimeContest = 0;
+    // startTime = millis();
     // uint8_t errOverrideStart = 0;
     // uint8_t errRunoutTimeStart = 0;
     // uint8_t errRunoutTimeContest = 0;
@@ -462,13 +463,13 @@ bool ContestManager::_contest4Runer()
     while (1)
     {
         deltaDistance = motor.getDistance() - lastDistance;
-
-        if (motor.getSensorHall() && !lastSensorHall && deltaDistance > 60)
+        bool curHall = motor.getSensorHall();
+        if (curHall && !lastSensorHall && deltaDistance > 150)
         {
 
             lastDistance = motor.getDistance();
 
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 40))
+            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
             {
                 // pass
             }
@@ -480,21 +481,22 @@ bool ContestManager::_contest4Runer()
             hardwareManager->serialLog.println("--> Contest4: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
             hallCount++;
         }
-        lastSensorHall = motor.getSensorHall();
+        lastSensorHall = curHall;
 
         // lỗi quá thời gian bài thi
-        if (millis() - startTime > 60000 && errRunoutTimeContest == 0)
+        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
         {
             addError(ERROR_RUNOUT_CONTEST_TIME);
+            errRunoutTimeContest = 1;
             hardwareManager->serialLog.println("--> Contest4: ERROR_RUNOUT_CONTEST_TIME");
-            hallCount = 9; // kết thúc bài thi
+            // hallCount = 9; // kết thúc bài thi
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
 
-        if (hallCount == 9)
+        if (hallCount == 11)
             return true;
-        if (hallCount > 9)
+        if (hallCount > 11)
             return false;
     }
 }

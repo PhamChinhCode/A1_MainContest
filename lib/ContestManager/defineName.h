@@ -1,8 +1,10 @@
 #pragma once
 
 // Contest IDs
-#define DEFAULT_SSID "PC_NET_MOBILE"
-#define DEFAULT_PASSWORD "1234567890"
+// #define DEFAULT_SSID "PC_NET_MOBILE"
+// #define DEFAULT_PASSWORD "1234567890"
+#define DEFAULT_SSID "dientuthainguyen.vn"
+#define DEFAULT_PASSWORD "299kmgio"
 
 #define HEADER_LENGTH 10 // 9 byte Header (từ START đến CRC)
 #define BYTE_START 0x30
