@@ -48,12 +48,12 @@ DateTime::DateTime(uint16_t y, uint8_t m, uint8_t d, uint8_t h, uint8_t min, uin
 		minute = min;
 		second = s;
 		// compute dayOfWeek using a simple algorithm
-	struct tm tt2 = {0};
-	tt2.tm_year = y - 1900;
-	tt2.tm_mon = m - 1;
-	tt2.tm_mday = d;
-	mktime(&tt2);
-	dayOfWeek = tt2.tm_wday;
+		struct tm tt2 = {0};
+		tt2.tm_year = y - 1900;
+		tt2.tm_mon = m - 1;
+		tt2.tm_mday = d;
+		mktime(&tt2);
+		dayOfWeek = tt2.tm_wday;
 		isValid = false;
 	}
 }
@@ -109,6 +109,27 @@ DateTime::DateTime(uint32_t epoch)
 	{
 		isValid = false;
 	}
+}
+void DateTime::setTimespand(uint32_t ts)
+{
+	struct timeval tv;
+	tv.tv_sec = ts; // giây
+	tv.tv_usec = 0; // micro-giây (0 là được)
+
+	settimeofday(&tv, NULL);
+	setTimezone("GMT-7");
+
+	// time_t now = (time_t)ts;
+	// struct tm tinfo;
+	// if (localtime_r(&now, &tinfo) != nullptr)
+	// {
+	// 	setFromTm(tinfo);
+	// 	isValid = true;
+	// }
+	// else
+	// {
+	// 	isValid = false;
+	// }
 }
 
 bool DateTime::begin(const char *tz, const char *ntpServer, uint32_t timeoutMs)

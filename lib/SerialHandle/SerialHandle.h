@@ -8,11 +8,10 @@
 class SerialHandle
 {
 private:
-    Stream *_stream; ///< pointer to any Stream (HardwareSerial, USBCDC, etc.)
-
     SemaphoreHandle_t serialMutex;
 
 public:
+    Stream *_stream; ///< pointer to any Stream (HardwareSerial, USBCDC, etc.)
     SerialHandle();
     ~SerialHandle();
     // Initialize with a HardwareSerial (begin with baud)

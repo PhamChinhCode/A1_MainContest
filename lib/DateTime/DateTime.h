@@ -24,6 +24,7 @@ public:
     ~DateTime();
     bool begin(const char *tz = "UTC0", const char *ntpServer = "pool.ntp.org", uint32_t timeoutMs = 5000);
     void setTimezone(const char *tz);
+    void setTimespand(uint32_t ts);
     static DateTime now();
     void update();
     bool valid();

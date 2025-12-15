@@ -187,6 +187,10 @@ void contestTask(void *pvParameters)
       hardwareManager.display.setContest(contestManager.getStatus());
       hardwareManager.display.display();
       timer = millis();
+
+      hardwareManager.serialLog.println("datetime: " + hardwareManager.dateTime.toString() + " , timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
+
+      hardwareManager.serialScreen._stream->println(hardwareManager.dateTime.toString());
       // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
       // hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
       // hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));

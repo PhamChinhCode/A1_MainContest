@@ -12,7 +12,8 @@ void HardwareManager::begin()
     microSD.begin();
     camera.init();
     serialLog.begin(SERIAL_OUTPUT, SERIAL_BAUDRATE);
-    serialScreen.begin(Serial);
+    Serial1.setPins(2, 1);
+    serialScreen.begin(Serial1, SERIAL_BAUDRATE);
     display.begin(DATA_PIN_DISPLAY, CLOCK_PIN_DISPLAY, LATCH_PIN_DISPLAY);
 }
 void HardwareManager::update()

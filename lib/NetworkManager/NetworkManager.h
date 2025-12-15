@@ -48,6 +48,7 @@ public:
 
     void sendCommandSocket(Command *cmd, uint8_t stopByte = BYTE_STOP);
     void sendImage();
+    void setRealtime(uint32_t interval);
 
     uint8_t getNotifyKey();
     uint32_t getNotifyValue();

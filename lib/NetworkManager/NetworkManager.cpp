@@ -55,6 +55,12 @@ bool NetworkManager::begin()
 
     String ssid = "";
     String pass = "";
+    String IpAdr = "";
+
+    IPAddress staticIp;
+    IPAddress gateway(192, 168, 0, 1);
+    IPAddress subnet(255, 255, 255, 0);
+    bool isIp = false;
 
     if (sysConfigData.length() > 0)
     {
@@ -66,6 +72,8 @@ bool NetworkManager::begin()
                 ssid = doc["ssid"].as<String>();
             if (!doc["pass"].isNull())
                 pass = doc["pass"].as<String>();
+            if (!doc["staticIP"].isNull())
+                IpAdr = doc["staticIP"].as<String>();
         }
         else
         {
@@ -80,11 +88,21 @@ bool NetworkManager::begin()
         ssid = DEFAULT_SSID; // leave empty to indicate no auto connect
         pass = DEFAULT_PASSWORD;
     }
+    if (IpAdr.length() > 0)
+    {
+        isIp = staticIp.fromString(IpAdr);
+    }
 
     if (ssid.length() > 0)
     {
         WiFi.mode(WIFI_STA);
+        WiFi.setAutoReconnect(true);
         hardwareManager->serialLog.println("Connecting to WiFi SSID: " + ssid + " PASS: " + pass);
+        if (isIp)
+        {
+            hardwareManager->serialLog.println("Using static IP: " + staticIp.toString());
+            WiFi.config(staticIp, gateway, subnet);
+        }
         WiFi.begin(ssid, pass);
         unsigned long start = millis();
         while (WiFi.status() != WL_CONNECTED && millis() - start < 20000)
@@ -457,15 +475,25 @@ void NetworkManager::handleSocketClient()
 
         Command *cmd = frameConverter.getCommand(buffer, len);
 
-        if (cmd->key == CAMERA_COMMAND)
+        switch (cmd->key)
         {
+        case CAMERA_COMMAND:
             sendImage();
-        }
-        else
-        {
+            break;
+        case REALTIME_COMMAND:
+            setRealtime(cmd->value);
+            break;
+
+        default:
             setNotify(cmd->key, cmd->value);
+            break;
         }
     }
+}
+void NetworkManager::setRealtime(uint32_t interval)
+{
+    hardwareManager->serialLog.println("Set realtime interval: " + String(interval) + " seconds");
+    hardwareManager->dateTime.setTimespand(interval);
 }
 void NetworkManager::sendCommandSocket(Command *cmd, uint8_t stopByte)
 {
@@ -495,6 +523,7 @@ void NetworkManager::sendCommandSocket(Command *cmd, uint8_t stopByte)
         hardwareManager->serialLog.print(String(bytesSent[i], HEX) + " ");
     }
     hardwareManager->serialLog.println(" ");
+
     if (socketClient && socketClient.connected())
     {
         socketClient.write(bytesSent, sizeof(bytesSent));
