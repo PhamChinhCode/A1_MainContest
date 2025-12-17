@@ -79,17 +79,17 @@ void Motorbike::update() // update sensor sate of motor
     //     this->lastTimeus = micros();
     // }
     // process signal Engine
-    if (digitalRead(this->engine_pin))
+    if (!digitalRead(this->engine_pin))
     {
         this->signelEngine = true;
         this->lastTimeEngine = millis();
     }
-    if ((millis() - this->lastTimeEngine > 1000) && this->signelEngine)
+    if ((millis() - this->lastTimeEngine > 500) && this->signelEngine)
     {
         this->signelEngine = false;
     }
     // process signal left
-    if (digitalRead(this->signel_left_pin))
+    if (!digitalRead(this->signel_left_pin))
     {
         this->signelLeft = true;
         this->lastTimeSignalLeft = millis();
