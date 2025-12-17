@@ -127,4 +127,4 @@ uint32_t Motorbike::getSpeed() // return speed of motor
 {
     return this->speed;
 }
-Motorbike motor(HALL_PIN, SIGNEL_LEFT_PIN, ENGINE_PIN, ENCODER_B_PIN);
+Motorbike motor(HALL_PIN, SIGNEL_LEFT_PIN, ENCODER_A_PIN, ENCODER_B_PIN);

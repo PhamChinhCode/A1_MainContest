@@ -247,6 +247,7 @@ bool ContestManager::_contest1Runer()
     // addLog(CONTEST_1_ID, "start contest 1");
 
     bool lastSensorHall = false;
+    bool lastEngine = true;
     int lastHallCount = -1;
     int32_t maxDistance = 0;
     int32_t minDistance = 0;
@@ -298,6 +299,7 @@ bool ContestManager::_contest1Runer()
     }
 
     lastSensorHall = motor.getSensorHall();
+    lastEngine = motor.getSignelEngine();
     lastDistance = motor.getDistance();
     // bắt đầu tính giờ thi
     timerRunContest = millis();
@@ -340,6 +342,13 @@ bool ContestManager::_contest1Runer()
         }
         lastSensorHall = curHall;
 
+        // lỗi chết máy
+        if (!motor.getSignelEngine() && lastEngine)
+        {
+            addError(ERROR_STOP_ENGINE);
+        }
+        lastEngine = motor.getSignelEngine();
+
         // lỗi quá thời gian bài thi
         if (millis() - timerRunContest > 600000)
         {
@@ -358,6 +367,7 @@ bool ContestManager::_contest2Runer()
     // addLog(CONTEST_2_ID, "start contest 2");
     setStatus(STATE_CONTEST2_RUNNING);
     bool lastSensorHall = false;
+    bool lastEngine = true;
     int lastHallCount = -1;
     int32_t maxDistance = 0;
     int32_t minDistance = 0;
@@ -377,6 +387,7 @@ bool ContestManager::_contest2Runer()
     maxSpeed = 0;
 
     lastSensorHall = motor.getSensorHall();
+    lastEngine = motor.getSignelEngine();
     lastDistance = motor.getDistance();
     maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
     minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
@@ -416,6 +427,13 @@ bool ContestManager::_contest2Runer()
         }
         lastSensorHall = curHall;
 
+        // lỗi chết máy
+        if (!motor.getSignelEngine() && lastEngine)
+        {
+            addError(ERROR_STOP_ENGINE);
+        }
+        lastEngine = motor.getSignelEngine();
+
         // lỗi quá thời gian bài thi
         if (millis() - timerRunContest > 600000)
         {
@@ -436,6 +454,7 @@ bool ContestManager::_contest3Runer()
     // addLog(CONTEST_3_ID, "start contest 3");
     setStatus(STATE_CONTEST3_RUNNING);
     bool lastSensorHall = false;
+    bool lastEngine = true;
     int lastHallCount = -1;
     int32_t maxDistance = 0;
     int32_t minDistance = 0;
@@ -454,6 +473,7 @@ bool ContestManager::_contest3Runer()
     hallCount = 11;
     maxSpeed = 0;
     lastSensorHall = motor.getSensorHall();
+    lastEngine = motor.getSignelEngine();
     lastDistance = motor.getDistance();
     maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
     minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
@@ -492,6 +512,13 @@ bool ContestManager::_contest3Runer()
         }
         lastSensorHall = curHall;
 
+        // lỗi chết máy
+        if (!motor.getSignelEngine() && lastEngine)
+        {
+            addError(ERROR_STOP_ENGINE);
+        }
+        lastEngine = motor.getSignelEngine();
+
         // lỗi quá thời gian bài thi
         if (millis() - timerRunContest > 600000)
         {
@@ -512,6 +539,7 @@ bool ContestManager::_contest4Runer()
     // addLog(CONTEST_4_ID, "start contest 4");
     setStatus(STATE_CONTEST4_RUNNING);
     bool lastSensorHall = false;
+    bool lastEngine = true;
     int lastHallCount = -1;
     int32_t maxDistance = 0;
     int32_t minDistance = 0;
@@ -530,6 +558,7 @@ bool ContestManager::_contest4Runer()
     hallCount = 13;
     maxSpeed = 0;
     lastSensorHall = motor.getSensorHall();
+    lastEngine = motor.getSignelEngine();
     lastDistance = motor.getDistance();
     maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
     minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
@@ -567,6 +596,13 @@ bool ContestManager::_contest4Runer()
             }
         }
         lastSensorHall = curHall;
+
+        // lỗi chết máy
+        if (!motor.getSignelEngine() && lastEngine)
+        {
+            addError(ERROR_STOP_ENGINE);
+        }
+        lastEngine = motor.getSignelEngine();
 
         // lỗi quá thời gian bài thi
         if (millis() - timerRunContest > 600000)

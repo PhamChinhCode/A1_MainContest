@@ -195,7 +195,12 @@ void contestTask(void *pvParameters)
       command.key = REALTIME_COMMAND;
       command.value = hardwareManager.dateTime.getTimestamp();
       hardwareManager.serialScreen.sendCommand(&command);
+
+      command.key = DEVICE_STATUS_COMMAND;
+      command.value = (uint32_t)motor.getSignelEngine();
+      hardwareManager.serialScreen.sendCommand(&command);
       // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
+      // hardwareManager.serialLog.println("sl: " + String(motor.getSignelLeft()) + "\ten: " + String(motor.getSignelEngine()));
       // hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
       // hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
       // hardwareManager.sersialScreen.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
