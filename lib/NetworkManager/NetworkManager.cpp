@@ -50,7 +50,7 @@ bool NetworkManager::begin()
 {
     // Read system WiFi config from SD
     String sysConfigData = hardwareManager->microSD.readData(SYSTEM_WIFI_CONFIG_PATH);
-    hardwareManager->serialLog.println("System config: ");
+    hardwareManager->serialLog.print("System config: ");
     hardwareManager->serialLog.println(sysConfigData);
 
     String ssid = "";
@@ -119,6 +119,7 @@ bool NetworkManager::begin()
         {
             hardwareManager->serialLog.println("WiFi connect timeout");
         }
+        hardwareManager->serialLog.println("VERSION: " + String(VERSION));
     }
 
     return true;
@@ -384,6 +385,13 @@ void NetworkManager::handleServer(HTTPMethod method)
     else if (method == HTTP_GET)
     {
         String configData = hardwareManager->microSD.readData(SYSTEM_WIFI_CONFIG_PATH);
+        JsonDocument config;
+        DeserializationError err2 = deserializeJson(config, configData);
+        if (!config["version"].isNull())
+        {
+            config["version"] = String(VERSION);
+        }
+        serializeJson(config, configData);
         server.send(200, "application/json", configData);
     }
 }
@@ -468,7 +476,12 @@ void NetworkManager::handleSocketClient()
     {
         // len = socketClient.readBytes(buffer, FRAME_BUFFER_SIZE);
         len = socketClient.readBytesUntil(BYTE_STOP, buffer, FRAME_BUFFER_SIZE);
-        hardwareManager->serialLog.println("Received socket data: " + String(len) + " bytes");
+        hardwareManager->serialLog.print("Received socket data: " + String(len) + " bytes");
+        for (uint8_t i = 0; i < len; i++)
+        {
+            hardwareManager->serialLog.print(String(buffer[i], HEX) + " ");
+        }
+        hardwareManager->serialLog.println(" ");
         // frameConverter.setFrame(buffer, len);
         // uint8_t key = frameConverter.getKey();
         // uint32_t value = frameConverter.getValue();
@@ -482,6 +495,17 @@ void NetworkManager::handleSocketClient()
             break;
         case REALTIME_COMMAND:
             setRealtime(cmd->value);
+            break;
+        case ERROR_COMMAND:
+            hardwareManager->serialScreen.sendCommand(cmd);
+            hardwareManager->serialLog.println("Received ERROR_COMMAND: " + String(cmd->value));
+            break;
+        case MARK_COMMAND:
+            hardwareManager->serialScreen.sendCommand(cmd);
+
+            break;
+        case IDNUMBER_COMMAND:
+            hardwareManager->serialScreen.sendCommand(cmd);
             break;
 
         default:
@@ -516,17 +540,17 @@ void NetworkManager::sendCommandSocket(Command *cmd, uint8_t stopByte)
     bytesSent[7] = cmd->value & 0xFF;
     bytesSent[8] = 0;
     bytesSent[9] = stopByte;
-    hardwareManager->serialLog.print("Sent socket data " + String(sizeof(bytesSent)));
-    hardwareManager->serialLog.print(" bytes: ");
-    for (uint8_t i = 0; i < sizeof(bytesSent); i++)
-    {
-        hardwareManager->serialLog.print(String(bytesSent[i], HEX) + " ");
-    }
-    hardwareManager->serialLog.println(" ");
 
     if (socketClient && socketClient.connected())
     {
         socketClient.write(bytesSent, sizeof(bytesSent));
+        hardwareManager->serialLog.print("Sent socket data " + String(sizeof(bytesSent)));
+        hardwareManager->serialLog.print(" bytes: ");
+        for (uint8_t i = 0; i < sizeof(bytesSent); i++)
+        {
+            hardwareManager->serialLog.print(String(bytesSent[i], HEX) + " ");
+        }
+        hardwareManager->serialLog.println(" ");
     }
 }
 void NetworkManager::sendImage()

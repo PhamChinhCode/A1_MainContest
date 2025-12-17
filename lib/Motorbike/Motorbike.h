@@ -12,7 +12,7 @@
 #define ONE_SIGNEL_ENCODER_MODE 0
 #define TWO_SIGNEL_ENCODER_MODE 1
 #define ENCODER_SCALE 10
-#define TIMING_UPDATE_SPEED 200
+#define TIMING_UPDATE_SPEED 100
 
 #define HALL_PIN 41
 #define SIGNEL_LEFT_PIN 42
@@ -48,7 +48,7 @@ private:
     volatile uint32_t encoderCount; // pulse
     uint32_t distance;              // cm
     uint32_t speed;                 // cm/s
-    uint32_t lastTime;
+    uint64_t lastTimeus;
     uint32_t lastTimeSignalLeft;
     uint32_t lastTimeEngine;
     uint32_t LastTimeEncoder;
@@ -71,6 +71,7 @@ public:
     bool getSignelLeft();
     bool getSensorHall();
     bool getSignelEngine();
+    void reset();
 
     uint32_t getEncoderCount();
     uint32_t getDistance();

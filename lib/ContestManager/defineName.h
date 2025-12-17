@@ -3,6 +3,8 @@
 // Contest IDs
 // #define DEFAULT_SSID "PC_NET_MOBILE"
 // #define DEFAULT_PASSWORD "1234567890"
+#define VERSION "1.0.2"
+
 #define DEFAULT_SSID "dientuthainguyen.vn"
 #define DEFAULT_PASSWORD "299kmgio"
 

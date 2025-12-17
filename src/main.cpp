@@ -11,7 +11,7 @@
 #include <HardwareManager.h>
 #include <NetworkManager.h>
 
-#define VERSION "1.0"
+// #define VERSION "1.0"
 
 const char *ssid_default = "PC_NET_MOBILE";
 const char *password_default = "1234567890";
@@ -180,17 +180,21 @@ void contestTask(void *pvParameters)
 
     if (millis() - timer > 1000)
     {
-      hardwareManager.display.setEncoder(motor.getEncoderCount() % 2 == 0 ? 0 : 1);
-      hardwareManager.display.setHallSensor(motor.getSensorHall());
-      hardwareManager.display.setEngine(motor.getSignelEngine());
-      hardwareManager.display.setSignalLeft(motor.getSignelLeft());
-      hardwareManager.display.setContest(contestManager.getStatus());
-      hardwareManager.display.display();
+      // hardwareManager.display.setEncoder(motor.getEncoderCount() % 2 == 0 ? 0 : 1);
+      // hardwareManager.display.setHallSensor(motor.getSensorHall());
+      // hardwareManager.display.setEngine(motor.getSignelEngine());
+      // hardwareManager.display.setSignalLeft(motor.getSignelLeft());
+      // hardwareManager.display.setContest(contestManager.getStatus());
+      // hardwareManager.display.display();
       timer = millis();
 
-      hardwareManager.serialLog.println("datetime: " + hardwareManager.dateTime.toString() + " , timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
+      // hardwareManager.serialLog.println("datetime: " + hardwareManager.dateTime.toString() + " , timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
 
-      hardwareManager.serialScreen._stream->println(hardwareManager.dateTime.toString());
+      // hardwareManager.serialScreen._stream->println(hardwareManager.dateTime.toString());
+      Command command;
+      command.key = REALTIME_COMMAND;
+      command.value = hardwareManager.dateTime.getTimestamp();
+      hardwareManager.serialScreen.sendCommand(&command);
       // contestManager.setNotify(STATE_COMMAND, contestManager.getStatus());
       // hardwareManager.serialLog.println("Encoder count : " + String(motor.getEncoderCount()) + " DeltaTime : " + String(motor.DeltaTimeENC));
       // hardwareManager.serialLog.println("DateTime : " + hardwareManager.dateTime.toString() + " , Timestamp: " + String(hardwareManager.dateTime.getTimestamp()));
@@ -223,12 +227,29 @@ void contestTask(void *pvParameters)
 }
 void runTask(void *pvParameters)
 {
+  // float maxsp = 0;
+  // uint32_t deltaDis = 0;
+  // uint32_t lastDis = 0;
+  // bool lastHall;
+  // int i = 0;
   if (contestManager.isRunning())
   {
+    // hardwareManager.serialLog._stream->println(motor.DeltaTimeENC);
+    // if (motor.getSpeed() > maxsp)
+    //   maxsp = motor.getSpeed();
     contestManager._runContest();
+    // if (motor.getSensorHall() && !lastHall)
+    // {
+    //   deltaDis = motor.getDistance() - lastDis;
+    //   lastDis = motor.getDistance();
+    //   hardwareManager.serialLog.println("dis " + String(i) + " = " + String(deltaDis) + " cm\t Speed: " + String(motor.getSpeed()) + " cm/s");
+    //   i++;
+    // }
+    // lastHall = motor.getSensorHall();
+
     vTaskDelay(1 / portTICK_PERIOD_MS);
   }
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
 void setup()

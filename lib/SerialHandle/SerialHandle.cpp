@@ -42,6 +42,27 @@ void SerialHandle::print(const char *message)
         xSemaphoreGive(serialMutex);
     }
 }
+void SerialHandle::write(const uint8_t *buffer, size_t size)
+{
+    if (serialMutex == NULL || _stream == nullptr)
+        return;
+    if (xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE)
+    {
+        _stream->write(buffer, size);
+        xSemaphoreGive(serialMutex);
+    }
+}
+void SerialHandle::sendCommand(Command *cmd)
+{
+    if (serialMutex == NULL || _stream == nullptr)
+        return;
+
+    if (xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE)
+    {
+        _stream->write(frameConvert.getFrame(cmd), 10);
+        xSemaphoreGive(serialMutex);
+    }
+}
 void SerialHandle::println(const String &message)
 {
     if (serialMutex == NULL || _stream == nullptr)

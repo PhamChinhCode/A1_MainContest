@@ -24,6 +24,20 @@ void ContestManager::begin()
     {
         this->_contestIndex[i] = 0;
     }
+    _delta[0] = 13.9;
+    _delta[1] = 10.6;
+    _delta[2] = 27.2;
+    _delta[3] = 13.1;
+    _delta[4] = 28.3;
+    _delta[5] = 7.7;
+    _delta[6] = 26.9;
+    _delta[7] = 16.7;
+    _delta[8] = 10.8;
+    _delta[9] = 11.9;
+    _delta[10] = 6.1;
+    _delta[11] = 82.4;
+    _delta[12] = 27.8;
+    _delta[13] = 6.3;
     setStatus(STATE_FREE_COMMAND);
 }
 void ContestManager::setQueue(QueueHandle_t *queue)
@@ -42,7 +56,7 @@ void ContestManager::loadConfig(String str)
     deserializeJson(doc, str.c_str());
     hardwareManager->serialLog.println("Load config:");
 
-    for (int i = 0; i < 11; i++)
+    for (int i = 0; i < TOTAL_DISTANCE + 1; i++)
     {
         String key = "distance" + String(i + 1);
         if (!doc[key].isNull())
@@ -107,31 +121,32 @@ void ContestManager::stop()
 }
 void ContestManager::addError(uint8_t errorID)
 {
-    setNotify(ERROR_COMMAND, errorID);
+    if (errorID != ERROR_GO_WRONG_WAY)
+        setNotify(ERROR_COMMAND, errorID);
     switch (errorID)
     {
     case ERROR_OVERRIDE_START:
-        hardwareManager->serialLog.println("Error added: ERROR_OVERRIDE_START");
+        hardwareManager->serialLog.println("\t\t!> Error: ERROR_OVERRIDE_START");
         errOverrideStart++;
         break;
     case ERROR_RUNOUT_START_TIME:
-        hardwareManager->serialLog.println("Error added: ERROR_RUNOUT_START_TIME");
+        hardwareManager->serialLog.println("\t\t!> Error: ERROR_RUNOUT_START_TIME");
         errRunoutTimeStart++;
         break;
     case ERROR_RUNOUT_CONTEST_TIME:
-        hardwareManager->serialLog.println("Error added: ERROR_RUNOUT_CONTEST_TIME");
+        hardwareManager->serialLog.println("\t\t!> Error: ERROR_RUNOUT_CONTEST_TIME");
         errRunoutTimeContest++;
         break;
     case ERROR_GO_WRONG_WAY:
-        hardwareManager->serialLog.println("Error added: ERROR_GO_WRONG_WAY");
+        hardwareManager->serialLog.println("\t\t!> Error: ERROR_GO_WRONG_WAY");
         errGoWrongWay++;
         break;
     case ERROR_STOP_ENGINE:
-        hardwareManager->serialLog.println("Error added: ERROR_STOP_ENGINE");
+        hardwareManager->serialLog.println("\t\t!> Error: ERROR_STOP_ENGINE");
         errStopEngine++;
         break;
     case ERROR_NO_SIGNAL_LEFT_IN:
-        hardwareManager->serialLog.println("Error added: ERROR_NO_SIGNAL_LEFT_IN");
+        hardwareManager->serialLog.println("\t\t!> Error: ERROR_NO_SIGNAL_LEFT_IN");
         errNoSignalLeft++;
         break;
     default:
@@ -166,6 +181,8 @@ void ContestManager::setNotify(uint8_t type, uint32_t val)
     command.key = type;
     command.value = val;
     sendCommandQueue(command);
+    if (type != ERROR_COMMAND)
+        hardwareManager->serialScreen.sendCommand(&command);
     vTaskDelay(1 / portTICK_PERIOD_MS);
 }
 void ContestManager::setStatus(uint8_t status)
@@ -196,24 +213,24 @@ void ContestManager::_runContest()
         switch (this->_contestIndex[i])
         {
         case CONTEST_1_ID:
-            hardwareManager->serialLog.println("Bắt đầu cuộc thi: " + String(this->_contestName[0]));
+            hardwareManager->serialLog.println("\n==>: Start " + String(this->_contestName[0]));
             this->_contest1Runer();
-            hardwareManager->serialLog.println("Kết thúc cuộc thi: " + String(this->_contestName[0]));
+            hardwareManager->serialLog.println("<==: Stop " + String(this->_contestName[0]));
             break;
         case CONTEST_2_ID:
-            hardwareManager->serialLog.println("Bắt đầu cuộc thi: " + String(this->_contestName[1]));
+            hardwareManager->serialLog.println("\n==>: Start " + String(this->_contestName[1]));
             this->_contest2Runer();
-            hardwareManager->serialLog.println("Kết thúc cuộc thi: " + String(this->_contestName[1]));
+            hardwareManager->serialLog.println("<==: Stop " + String(this->_contestName[1]));
             break;
         case CONTEST_3_ID:
-            hardwareManager->serialLog.println("Bắt đầu cuộc thi: " + String(this->_contestName[2]));
+            hardwareManager->serialLog.println("\n==>: Start " + String(this->_contestName[2]));
             this->_contest3Runer();
-            hardwareManager->serialLog.println("Kết thúc cuộc thi: " + String(this->_contestName[2]));
+            hardwareManager->serialLog.println("<==: Stop " + String(this->_contestName[2]));
             break;
         case CONTEST_4_ID:
-            hardwareManager->serialLog.println("Bắt đầu cuộc thi: " + String(this->_contestName[3]));
+            hardwareManager->serialLog.println("\n==>: Start " + String(this->_contestName[3]));
             this->_contest4Runer();
-            hardwareManager->serialLog.println("Kết thúc cuộc thi: " + String(this->_contestName[3]));
+            hardwareManager->serialLog.println("<==: Stop " + String(this->_contestName[3]));
             break;
         default:
             break;
@@ -227,13 +244,20 @@ void ContestManager::_runContest()
 
 bool ContestManager::_contest1Runer()
 {
-    addLog(CONTEST_1_ID, "start contest 1");
+    // addLog(CONTEST_1_ID, "start contest 1");
 
     bool lastSensorHall = false;
-    hallCount = 0;
+    int lastHallCount = -1;
+    int32_t maxDistance = 0;
+    int32_t minDistance = 0;
+
     uint32_t lastDistance = 0;
     uint32_t deltaDistance = 0;
+
     startTime = millis();
+    timerRunContest = millis();
+    hallCount = 0;
+    maxSpeed = 0;
 
     // addError(ERROR_NO_SIGNAL_LEFT_IN);
 
@@ -245,12 +269,12 @@ bool ContestManager::_contest1Runer()
     // uint8_t errNoSignalLeft = 0;
 
     // chờ tín hiệu đi qua vạch xuất phát
-    while (!motor.getSensorHall() && errRunoutTimeStart == 0)
+    while (!motor.getSensorHall())
     {
-        if (millis() - startTime > 600000 && errRunoutTimeStart == 0)
+        if (millis() - timerRunContest > 120000)
         {
             addError(ERROR_RUNOUT_START_TIME);
-            hardwareManager->serialLog.println("--> Contest1: ERROR_RUNOUT_START_TIME");
+            timerRunContest = millis();
         }
         // loại bỏ lỗi đè vạch start
         if (errOverrideStart == 1)
@@ -260,71 +284,84 @@ bool ContestManager::_contest1Runer()
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
     setStatus(STATE_CONTEST1_RUNNING);
-    // bắt đầu tính giờ thi
-    startTime = millis();
 
     // lỗi không xi nhan trái
-    if (!motor.getSignelLeft() && errNoSignalLeft == 0)
+    if (!motor.getSignelLeft())
     {
         addError(ERROR_NO_SIGNAL_LEFT_IN);
     }
     // lỗi đè vạch xuất phát
     if (errOverrideStart == 1)
     {
+        errOverrideStart = 0;
         addError(ERROR_OVERRIDE_START);
     }
 
     lastSensorHall = motor.getSensorHall();
     lastDistance = motor.getDistance();
+    // bắt đầu tính giờ thi
+    timerRunContest = millis();
+
+    maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    hardwareManager->serialLog.println("\t--> B1 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
     // bắt đầu bài thi
     while (1)
     {
-        deltaDistance = motor.getDistance() - lastDistance;
+        if (motor.getSpeed() > maxSpeed)
+            maxSpeed = motor.getSpeed();
         bool curHall = motor.getSensorHall();
-        if (curHall && !lastSensorHall && deltaDistance > 150)
+        deltaDistance = motor.getDistance() - lastDistance;
+        // check error way always
+        if (lastHallCount != hallCount && deltaDistance > maxDistance)
         {
-            lastDistance = motor.getDistance();
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
-            {
-                // pass
-            }
-            else
+            addError(ERROR_GO_WRONG_WAY);
+            lastHallCount = hallCount;
+        }
+        // check distance while in hal trigger
+        if (curHall && !lastSensorHall && deltaDistance > 20)
+        {
+            if (deltaDistance < minDistance || deltaDistance > maxDistance)
             {
                 addError(ERROR_GO_WRONG_WAY);
-                hardwareManager->serialLog.println("--> Contest1: ERROR_GO_WRONG_WAY");
             }
-            hardwareManager->serialLog.println("--> Contest1: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
+            hardwareManager->serialLog.println("\t<-- B1 => dD" + String(hallCount) + ": " + String(deltaDistance) + "\tMaxSp: " + String(maxSpeed) + "\n");
+            // update new ampli of distance
             hallCount++;
+            // reset for new Distance
+            if (hallCount < 9)
+            {
+                maxSpeed = 0;
+                lastDistance = motor.getDistance();
+                maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                hardwareManager->serialLog.println("\t--> B1 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
+            }
         }
         lastSensorHall = curHall;
 
         // lỗi quá thời gian bài thi
-        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
+        if (millis() - timerRunContest > 600000)
         {
             addError(ERROR_RUNOUT_CONTEST_TIME);
-            errRunoutTimeContest = 1;
-            hardwareManager->serialLog.println("--> Contest1: ERROR_RUNOUT_CONTEST_TIME");
-            // hallCount = 4; // kết thúc bài thi
+            timerRunContest = millis();
         }
-
-        if (hallCount == 6)
-        {
-            return true;
-        }
-        if (hallCount > 6)
-        {
-            return false;
-        }
-
         vTaskDelay(1 / portTICK_PERIOD_MS);
+        if (hallCount == 9)
+            return true;
+        if (hallCount > 9)
+            return false;
     }
 }
 bool ContestManager::_contest2Runer()
 {
-    addLog(CONTEST_2_ID, "start contest 2");
+    // addLog(CONTEST_2_ID, "start contest 2");
     setStatus(STATE_CONTEST2_RUNNING);
     bool lastSensorHall = false;
-    hallCount = 6;
+    int lastHallCount = -1;
+    int32_t maxDistance = 0;
+    int32_t minDistance = 0;
+
     uint32_t lastDistance = 0;
     uint32_t deltaDistance = 0;
     // uint32_t startTime = millis();
@@ -336,160 +373,54 @@ bool ContestManager::_contest2Runer()
     // uint8_t errGoWrongWay = 0;
     // uint8_t errStopEngine = 0;
     // uint8_t errNoSignalLeft = 0;
+    hallCount = 9;
+    maxSpeed = 0;
 
     lastSensorHall = motor.getSensorHall();
     lastDistance = motor.getDistance();
+    maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+
+    hardwareManager->serialLog.println("\t--> B2 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
     while (1)
     {
+        if (motor.getSpeed() > maxSpeed)
+            maxSpeed = motor.getSpeed();
         deltaDistance = motor.getDistance() - lastDistance;
         bool curHall = motor.getSensorHall();
-        if (curHall && !lastSensorHall && deltaDistance > 50)
+        // check error way always
+        if (lastHallCount != hallCount && deltaDistance > maxDistance)
         {
-
-            lastDistance = motor.getDistance();
-
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
-            {
-                // pass
-            }
-            else
+            addError(ERROR_GO_WRONG_WAY);
+            lastHallCount = hallCount;
+        }
+        // check distance while in hal trigger
+        if (curHall && !lastSensorHall && deltaDistance > 20)
+        {
+            if (deltaDistance < minDistance || deltaDistance > maxDistance)
             {
                 addError(ERROR_GO_WRONG_WAY);
-                hardwareManager->serialLog.println("--> Contest2: ERROR_GO_WRONG_WAY");
             }
-            hardwareManager->serialLog.println("--> Contest2: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
+            hardwareManager->serialLog.println("\t<-- B2 => dD" + String(hallCount) + ": " + String(deltaDistance) + "\tMaxSp: " + String(maxSpeed));
+            // update new ampli of distance
             hallCount++;
+            // reset for new Distance
+            if (hallCount < 11)
+            {
+                maxSpeed = 0;
+                lastDistance = motor.getDistance();
+                maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                hardwareManager->serialLog.println("\t--> B2 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
+            }
         }
         lastSensorHall = curHall;
 
         // lỗi quá thời gian bài thi
-        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
+        if (millis() - timerRunContest > 600000)
         {
             addError(ERROR_RUNOUT_CONTEST_TIME);
-            errRunoutTimeContest = 1;
-            hardwareManager->serialLog.println("--> Contest2: ERROR_RUNOUT_CONTEST_TIME");
-            // hallCount = 5; // kết thúc bài thi
-        }
-
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-
-        if (hallCount == 8)
-            return true;
-        if (hallCount > 8)
-            return false;
-    }
-}
-bool ContestManager::_contest3Runer()
-{
-    addLog(CONTEST_3_ID, "start contest 3");
-    setStatus(STATE_CONTEST3_RUNNING);
-    bool lastSensorHall = false;
-    hallCount = 8;
-    uint32_t lastDistance = 0;
-    uint32_t deltaDistance = 0;
-    // uint32_t startTime = millis();
-    // errRunoutTimeContest = 0;
-    // startTime = millis();
-    // uint8_t errOverrideStart = 0;
-    // uint8_t errRunoutTimeStart = 0;
-    // uint8_t errRunoutTimeContest = 0;
-    // uint8_t errGoWrongWay = 0;
-    // uint8_t errStopEngine = 0;
-    // uint8_t errNoSignalLeft = 0;
-
-    lastSensorHall = motor.getSensorHall();
-    lastDistance = motor.getDistance();
-    while (1)
-    {
-        deltaDistance = motor.getDistance() - lastDistance;
-        bool curHall = motor.getSensorHall();
-        if (curHall && !lastSensorHall && deltaDistance > 100)
-        {
-
-            lastDistance = motor.getDistance();
-
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 200 + _distance[hallCount] * 0.5))
-            {
-                // pass
-            }
-            else
-            {
-                addError(ERROR_GO_WRONG_WAY);
-                hardwareManager->serialLog.println("--> Contest3: ERROR_GO_WRONG_WAY");
-            }
-            hardwareManager->serialLog.println("--> Contest3: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
-            hallCount++;
-        }
-        lastSensorHall = curHall;
-
-        // lỗi quá thời gian bài thi
-        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
-        {
-            addError(ERROR_RUNOUT_CONTEST_TIME);
-            errRunoutTimeContest = 1;
-            hardwareManager->serialLog.println("--> Contest3: ERROR_RUNOUT_CONTEST_TIME");
-            // hallCount = 7; // kết thúc bài thi
-        }
-
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-
-        if (hallCount == 10)
-            return true;
-        if (hallCount > 10)
-            return false;
-    }
-}
-bool ContestManager::_contest4Runer()
-{
-
-    addLog(CONTEST_4_ID, "start contest 4");
-    setStatus(STATE_CONTEST4_RUNNING);
-    bool lastSensorHall = false;
-    hallCount = 10;
-    uint32_t lastDistance = 0;
-    uint32_t deltaDistance = 0;
-    // uint32_t startTime = millis();
-    // errRunoutTimeContest = 0;
-    // startTime = millis();
-    // uint8_t errOverrideStart = 0;
-    // uint8_t errRunoutTimeStart = 0;
-    // uint8_t errRunoutTimeContest = 0;
-    // uint8_t errGoWrongWay = 0;
-    // uint8_t errStopEngine = 0;
-    // uint8_t errNoSignalLeft = 0;
-
-    lastSensorHall = motor.getSensorHall();
-    lastDistance = motor.getDistance();
-    while (1)
-    {
-        deltaDistance = motor.getDistance() - lastDistance;
-        bool curHall = motor.getSensorHall();
-        if (curHall && !lastSensorHall && deltaDistance > 150)
-        {
-
-            lastDistance = motor.getDistance();
-
-            if (inDeltaValue(deltaDistance, _distance[hallCount], 50 + _distance[hallCount] * 0.5))
-            {
-                // pass
-            }
-            else
-            {
-                addError(ERROR_GO_WRONG_WAY);
-                hardwareManager->serialLog.println("--> Contest4: ERROR_GO_WRONG_WAY");
-            }
-            hardwareManager->serialLog.println("--> Contest4: distance" + String(hallCount) + "= " + String(_distance[hallCount]) + "   DeltaDistance =" + String(deltaDistance));
-            hallCount++;
-        }
-        lastSensorHall = curHall;
-
-        // lỗi quá thời gian bài thi
-        if (millis() - startTime > 600000 && errRunoutTimeContest == 0)
-        {
-            addError(ERROR_RUNOUT_CONTEST_TIME);
-            errRunoutTimeContest = 1;
-            hardwareManager->serialLog.println("--> Contest4: ERROR_RUNOUT_CONTEST_TIME");
-            // hallCount = 9; // kết thúc bài thi
+            timerRunContest = millis();
         }
 
         vTaskDelay(1 / portTICK_PERIOD_MS);
@@ -499,6 +430,159 @@ bool ContestManager::_contest4Runer()
         if (hallCount > 11)
             return false;
     }
+}
+bool ContestManager::_contest3Runer()
+{
+    // addLog(CONTEST_3_ID, "start contest 3");
+    setStatus(STATE_CONTEST3_RUNNING);
+    bool lastSensorHall = false;
+    int lastHallCount = -1;
+    int32_t maxDistance = 0;
+    int32_t minDistance = 0;
+
+    uint32_t lastDistance = 0;
+    uint32_t deltaDistance = 0;
+    // uint32_t startTime = millis();
+    // errRunoutTimeContest = 0;
+    // startTime = millis();
+    // uint8_t errOverrideStart = 0;
+    // uint8_t errRunoutTimeStart = 0;
+    // uint8_t errRunoutTimeContest = 0;
+    // uint8_t errGoWrongWay = 0;
+    // uint8_t errStopEngine = 0;
+    // uint8_t errNoSignalLeft = 0;
+    hallCount = 11;
+    maxSpeed = 0;
+    lastSensorHall = motor.getSensorHall();
+    lastDistance = motor.getDistance();
+    maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    hardwareManager->serialLog.println("\t--> B3 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
+    while (1)
+    {
+        if (motor.getSpeed() > maxSpeed)
+            maxSpeed = motor.getSpeed();
+        deltaDistance = motor.getDistance() - lastDistance;
+        bool curHall = motor.getSensorHall();
+        // check error way always
+        if (lastHallCount != hallCount && deltaDistance > maxDistance)
+        {
+            addError(ERROR_GO_WRONG_WAY);
+            lastHallCount = hallCount;
+        }
+        // check distance while in hal trigger
+        if (curHall && !lastSensorHall && deltaDistance > 20)
+        {
+            if (deltaDistance < minDistance || deltaDistance > maxDistance)
+            {
+                addError(ERROR_GO_WRONG_WAY);
+            }
+            hardwareManager->serialLog.println("\t<-- B3 => dD" + String(hallCount) + ": " + String(deltaDistance) + "\tMaxSp: " + String(maxSpeed));
+            // update new ampli of distance
+            hallCount++;
+            // reset for new Distance
+            if (hallCount < 13)
+            {
+                maxSpeed = 0;
+                lastDistance = motor.getDistance();
+                maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                hardwareManager->serialLog.println("\t--> B3 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
+            }
+        }
+        lastSensorHall = curHall;
+
+        // lỗi quá thời gian bài thi
+        if (millis() - timerRunContest > 600000)
+        {
+            addError(ERROR_RUNOUT_CONTEST_TIME);
+            timerRunContest = millis();
+        }
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+
+        if (hallCount == 13)
+            return true;
+        if (hallCount > 13)
+            return false;
+    }
+}
+bool ContestManager::_contest4Runer()
+{
+    // addLog(CONTEST_4_ID, "start contest 4");
+    setStatus(STATE_CONTEST4_RUNNING);
+    bool lastSensorHall = false;
+    int lastHallCount = -1;
+    int32_t maxDistance = 0;
+    int32_t minDistance = 0;
+
+    uint32_t lastDistance = 0;
+    uint32_t deltaDistance = 0;
+    // uint32_t startTime = millis();
+    // errRunoutTimeContest = 0;
+    // startTime = millis();
+    // uint8_t errOverrideStart = 0;
+    // uint8_t errRunoutTimeStart = 0;
+    // uint8_t errRunoutTimeContest = 0;
+    // uint8_t errGoWrongWay = 0;
+    // uint8_t errStopEngine = 0;
+    // uint8_t errNoSignalLeft = 0;
+    hallCount = 13;
+    maxSpeed = 0;
+    lastSensorHall = motor.getSensorHall();
+    lastDistance = motor.getDistance();
+    maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+    hardwareManager->serialLog.println("\t--> B4 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
+    while (1)
+    {
+        if (motor.getSpeed() > maxSpeed)
+            maxSpeed = motor.getSpeed();
+        deltaDistance = motor.getDistance() - lastDistance;
+        bool curHall = motor.getSensorHall();
+        // check error way always
+        if (lastHallCount != hallCount && deltaDistance > maxDistance)
+        {
+            addError(ERROR_GO_WRONG_WAY);
+            lastHallCount = hallCount;
+        }
+        // check distance while in hal trigger
+        if (curHall && !lastSensorHall && deltaDistance > 20)
+        {
+            if (deltaDistance < minDistance || deltaDistance > maxDistance)
+            {
+                addError(ERROR_GO_WRONG_WAY);
+            }
+            hardwareManager->serialLog.println("\t<-- B4 => dD" + String(hallCount) + ": " + String(deltaDistance) + "\tMaxSp: " + String(maxSpeed));
+            // update new ampli of distance
+            hallCount++;
+            // reset for new Distance
+            if (hallCount < 14)
+            {
+                maxSpeed = 0;
+                lastDistance = motor.getDistance();
+                maxDistance = _distance[hallCount] + (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                minDistance = _distance[hallCount] - (20 + (_distance[hallCount] * _delta[hallCount] / 100.0));
+                hardwareManager->serialLog.println("\t--> B4 => sD" + String(hallCount) + ": " + String(_distance[hallCount]));
+            }
+        }
+        lastSensorHall = curHall;
+
+        // lỗi quá thời gian bài thi
+        if (millis() - timerRunContest > 600000)
+        {
+            addError(ERROR_RUNOUT_CONTEST_TIME);
+            timerRunContest = millis();
+        }
+
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+
+        if (hallCount == 14)
+            return true;
+        if (hallCount > 14)
+            return false;
+    }
+    // hardwareManager->serialLog.println("Kết thúc cuộc thi 4: Max speed = " + String(maxSpeed) + " m/s");
 }
 void ContestManager::addLog(uint8_t eventID, String description)
 {

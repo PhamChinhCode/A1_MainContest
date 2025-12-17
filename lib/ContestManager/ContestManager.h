@@ -10,6 +10,8 @@
 #include <HardwareManager.h>
 #include <FrameConvert.h>
 
+#define TOTAL_DISTANCE 14
+
 extern TaskHandle_t _contestHandle;
 
 class ContestManager
@@ -18,10 +20,10 @@ private:
     HardwareManager *hardwareManager;
     uint8_t _contestIndex[4];
     const char *_contestName[4] = {
-        "Đi qua hình số 8",
-        "Đi qua vạch đường thẳng",
-        "Đi qua đường có vạch cản",
-        "Đi qua đường gồ ghề"};
+        CONTEST_1_NAME,
+        CONTEST_2_NAME,
+        CONTEST_3_NAME,
+        CONTEST_4_NAME};
     bool _isRunning;
     unsigned long _startTime;
 
@@ -35,8 +37,11 @@ private:
     String _logPath;
     LogEntry _logEntries;
 
-    uint32_t _distance[11];
+    double maxSpeed = 0;
+    uint32_t _distance[TOTAL_DISTANCE + 1];
+    float _delta[TOTAL_DISTANCE + 1];
     uint32_t startTime = 0;
+    uint32_t timerRunContest = 0;
     uint8_t hallCount = 0;
     uint8_t errOverrideStart = 0;
     uint8_t errRunoutTimeStart = 0;

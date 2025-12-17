@@ -25,9 +25,10 @@ void Motorbike::attachPhaseA(void *arg)
 {
     Motorbike *m = static_cast<Motorbike *>(arg);
     m->DeltaTimeEncoder = micros() - m->LastTimeEncoder;
-    if (m->DeltaTimeEncoder > 2000)
+    if (m->DeltaTimeEncoder > 1000)
     {
         m->encoderCount++;
+        m->speed = (ENCODER_SCALE * 10000ULL) * 1.0 / m->DeltaTimeEncoder * 1.0;
         m->DeltaTimeENC = m->DeltaTimeEncoder;
         m->LastTimeEncoder = micros();
     }
@@ -58,6 +59,12 @@ void Motorbike::init()
     this->signelEngine = false;
     this->attachLine = false;
 }
+void Motorbike::reset()
+{
+    this->encoderCount = 0;
+    this->distance = 0;
+    this->speed = 0;
+}
 void Motorbike::update() // update sensor sate of motor
 {
 
@@ -65,12 +72,12 @@ void Motorbike::update() // update sensor sate of motor
 
     this->distance = this->encoderCount * ENCODER_SCALE;
 
-    if (millis() - this->lastTime > TIMING_UPDATE_SPEED)
-    {
-        uint32_t deltaTime = millis() - this->lastTime;
-        this->speed = this->distance * 1000 / deltaTime;
-        this->lastTime = millis();
-    }
+    // if (micros() - this->lastTimeus > TIMING_UPDATE_SPEED * 1000)
+    // {
+    //     uint32_t deltaTime = micros() - this->lastTimeus;
+    //     this->speed = this->distance * 1000.0 / deltaTime;
+    //     this->lastTimeus = micros();
+    // }
     // process signal Engine
     if (digitalRead(this->engine_pin))
     {

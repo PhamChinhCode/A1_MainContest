@@ -4,11 +4,13 @@
 #include <HardwareSerial.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include <FrameConvert.h>
 
 class SerialHandle
 {
 private:
     SemaphoreHandle_t serialMutex;
+    FrameConvert frameConvert;
 
 public:
     Stream *_stream; ///< pointer to any Stream (HardwareSerial, USBCDC, etc.)
@@ -22,8 +24,10 @@ public:
     void print(const char *message);
     void println(const String &message);
     void println(const char *message);
-    void logE(const String &message);
-    void logI(const String &message);
-    void logO(const String &message);
-    void logD(const String &message);
+    void sendCommand(Command *cmd);
+    void write(const uint8_t *buffer, size_t size);
+    void logE(const String &message, int logType);
+    void logI(const String &message, int logType);
+    void logO(const String &message, int logType);
+    void logD(const String &message, int logType);
 };
