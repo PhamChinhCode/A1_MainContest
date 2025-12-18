@@ -121,8 +121,8 @@ void ContestManager::stop()
 }
 void ContestManager::addError(uint8_t errorID)
 {
-    if (errorID != ERROR_GO_WRONG_WAY)
-        setNotify(ERROR_COMMAND, errorID);
+    // if (errorID != ERROR_GO_WRONG_WAY)
+    setNotify(ERROR_COMMAND, errorID);
     switch (errorID)
     {
     case ERROR_OVERRIDE_START:
