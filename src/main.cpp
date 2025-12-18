@@ -11,7 +11,7 @@
 #include <HardwareManager.h>
 #include <NetworkManager.h>
 
-// #define VERSION "1.0"
+// #define VERSION "1.0" brach feature uart dma
 
 const char *ssid_default = "PC_NET_MOBILE";
 const char *password_default = "1234567890";
